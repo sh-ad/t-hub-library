@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Взять книгу</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root {
+      --fg: #111;
+      --bg: #fff;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --ok: #16a34a;
+      --err: #dc2626;
+      --card: #f8fafc;
+      --border: #e5e7eb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #e5e7eb; --bg: #0b0e14; --muted: #9ca3af;
+        --primary: #60a5fa; --ok: #22c55e; --err: #f87171;
+        --card: #0f131a; --border: #1f2937;
+      }
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--fg); background: radial-gradient(1200px 800px at 10% -10%, #c7d2fe22, transparent 60%), var(--bg);
+      display: grid; place-items: center; padding: 24px;
+    }
+    .wrap {
+      width: 100%; max-width: 560px; background: var(--card);
+      border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.06);
+    }
+    h1 { margin: 0 0 12px; font-size: 22px; }
+    p { margin: 10px 0; color: var(--muted); }
+    .code {
+      margin: 16px 0; padding: 12px 14px; font-size: 20px; font-weight: 700; letter-spacing: .04em;
+      border: 1px dashed var(--border); border-radius: 10px; background: #00000008;
+      color: var(--fg);
+      word-break: break-all;
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    button {
+      appearance: none; border: 0; border-radius: 10px; padding: 12px 14px; cursor: pointer;
+      background: var(--primary); color: #fff; font-weight: 600;
+    }
+    button.secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+    .msg { margin-top: 10px; font-size: 14px; }
+    .ok { color: var(--ok); } .err { color: var(--err); }
+    .hint { font-size: 13px; color: var(--muted); margin-top: 14px; }
+    .footer { margin-top: 18px; font-size: 12px; color: var(--muted); text-align: center; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Взять книгу</h1>
+    <p>Эта страница извлекает <b>код книги</b> из URL (передан в QR) и поможет быстро открыть чат в Time и отправить команду.</p>
+
+    <div id="codeBox" class="code">—</div>
+
+    <div class="row">
+      <button id="copyBtn">Скопировать код</button>
+      <button id="openBtn" class="secondary">Открыть бота в Time</button>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <p class="hint">
+      Если чат не открылся: зайдите в <b>@t-hub-library</b> в Time и вставьте код из буфера.
+    </p>
+
+    <div class="footer">Поддерживаются форматы URL: <code>?code=XYZ</code>, <code>#code=XYZ</code>, <code>#XYZ</code>, <code>/b/XYZ</code></div>
+  </main>
+
+  <script>
+    // ============= Конфигурация ============
+    const TIME_DM_URL = "https://time.tbank.ru/tinkoff/messages/@t-hub-library";
+
+    // Извлекаем код из разных форматов URL:
+    // 1) https://.../?code=ABC
+    // 2) https://.../#code=ABC
+    // 3) https://.../#ABC
+    // 4) https://.../b/ABC
+    function extractCode() {
+      const u = new URL(window.location.href);
+
+      // ?code=
+      const qp = u.searchParams.get("code");
+      if (qp) return qp.trim();
+
+      // #code= / #ABC
+      const hash = (u.hash || "").replace(/^#/, "");
+      if (hash) {
+        const m = hash.match(/^code=(.+)$/i);
+        return m ? decodeURIComponent(m[1]).trim() : hash.trim();
+      }
+
+      // /b/<code>
+      const parts = u.pathname.split("/").filter(Boolean);
+      const i = parts.findIndex(p => p.toLowerCase() === "b");
+      if (i >= 0 && parts[i+1]) return decodeURIComponent(parts[i+1]).trim();
+
+      return "";
+    }
+
+    function sanitizeCode(c) {
+      // Разрешим буквы/цифры/дефис/нижнее подчёркивание; остальное выкинем
+      const cleaned = (c || "").trim().replace(/[^A-Za-z0-9\-_]/g, "");
+      return cleaned;
+    }
+
+    async function copyToClipboard(text) {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } else {
+          // Fallback для небезопасного контекста/старых браузеров
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.focus(); ta.select();
+          const ok = document.execCommand("copy");
+          document.body.removeChild(ta);
+          return ok;
+        }
+      } catch {
+        return false;
+      }
+    }
+
+    function setMsg(text, cls) {
+      const box = document.getElementById("msg");
+      box.className = "msg " + (cls || "");
+      box.textContent = text || "";
+    }
+
+    (function init() {
+      const raw = extractCode();
+      const code = sanitizeCode(raw);
+
+      const codeBox = document.getElementById("codeBox");
+      const copyBtn = document.getElementById("copyBtn");
+      const openBtn = document.getElementById("openBtn");
+
+      if (!code) {
+        codeBox.textContent = "Код не найден в URL";
+        setMsg("Добавьте параметр ?code=XYZ или #XYZ, либо используйте путь /b/XYZ.", "err");
+        copyBtn.disabled = true;
+        openBtn.disabled = true;
+        document.title = "Код не найден — Взять книгу";
+        return;
+      }
+
+      codeBox.textContent = code;
+      document.title = `Код: ${code} — Взять книгу`;
+
+      // Автокопирование при загрузке (мягкая попытка)
+      copyToClipboard(code).then(ok => {
+        if (ok) setMsg("Код скопирован в буфер обмена.", "ok");
+      });
+
+      copyBtn.addEventListener("click", async () => {
+        const ok = await copyToClipboard(code);
+        setMsg(ok ? "Код скопирован." : "Не удалось скопировать код.", ok ? "ok" : "err");
+      });
+
+      openBtn.addEventListener("click", async () => {
+        // гарантия, что код уже в буфере
+        await copyToClipboard(code);
+        // открываем DM с библиотечным ботом
+        window.location.href = TIME_DM_URL;
+      });
+    })();
+  </script>
+</body>
+</html>
