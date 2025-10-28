@@ -2,182 +2,112 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>Взять книгу</title>
+  <title>Взять книгу — T-Hub Library</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <style>
-    :root {
-      --fg: #111;
-      --bg: #fff;
-      --muted: #6b7280;
-      --primary: #2563eb;
-      --ok: #16a34a;
-      --err: #dc2626;
-      --card: #f8fafc;
-      --border: #e5e7eb;
+    :root{
+      --bg:#0b0c10;--fg:#e6e6e6;--muted:#a6a6a6;
+      --card:#13151a;--accent:#3b82f6;--accent-contrast:#fff;
+      --border:#23252b;--ok:#22c55e;--err:#e11d48;
     }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --fg: #e5e7eb; --bg: #0b0e14; --muted: #9ca3af;
-        --primary: #60a5fa; --ok: #22c55e; --err: #f87171;
-        --card: #0f131a; --border: #1f2937;
-      }
+    @media (prefers-color-scheme: light){
+      :root{--bg:#f8fafc;--fg:#0f172a;--muted:#475569;--card:#fff;--border:#e2e8f0;--accent:#2563eb;}
     }
-    html, body { height: 100%; }
-    body {
-      margin: 0; font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-      color: var(--fg); background: radial-gradient(1200px 800px at 10% -10%, #c7d2fe22, transparent 60%), var(--bg);
-      display: grid; place-items: center; padding: 24px;
+    body{
+      margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg);color:var(--fg);
+      display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;
     }
-    .wrap {
-      width: 100%; max-width: 560px; background: var(--card);
-      border: 1px solid var(--border); border-radius: 14px; padding: 22px 20px;
-      box-shadow: 0 6px 24px rgba(0,0,0,.06);
-    }
-    h1 { margin: 0 0 12px; font-size: 22px; }
-    p { margin: 10px 0; color: var(--muted); }
-    .code {
-      margin: 16px 0; padding: 12px 14px; font-size: 20px; font-weight: 700; letter-spacing: .04em;
-      border: 1px dashed var(--border); border-radius: 10px; background: #00000008;
-      color: var(--fg);
-      word-break: break-all;
-    }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    button {
-      appearance: none; border: 0; border-radius: 10px; padding: 12px 14px; cursor: pointer;
-      background: var(--primary); color: #fff; font-weight: 600;
-    }
-    button.secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
-    .msg { margin-top: 10px; font-size: 14px; }
-    .ok { color: var(--ok); } .err { color: var(--err); }
-    .hint { font-size: 13px; color: var(--muted); margin-top: 14px; }
-    .footer { margin-top: 18px; font-size: 12px; color: var(--muted); text-align: center; }
-    .hidden { display: none; }
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+      padding:28px;max-width:600px;width:100%;text-align:center;
+      box-shadow:0 10px 25px rgba(0,0,0,.15);}
+    h1{margin:0 0 12px;font-size:24px}
+    p{margin:6px 0;color:var(--muted)}
+    .code{font-size:42px;font-weight:700;letter-spacing:.04em;
+      padding:16px;border-radius:12px;background:rgba(148,163,184,.1);
+      border:1px dashed var(--border);margin:16px 0;word-break:break-all;}
+    input[type=text]{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
+      background:transparent;color:var(--fg);font-size:18px;text-align:center;margin-bottom:12px;}
+    button{padding:12px 18px;border:0;border-radius:10px;font-size:16px;cursor:pointer;}
+    .primary{background:var(--accent);color:var(--accent-contrast);}
+    .ghost{background:transparent;border:1px solid var(--border);color:var(--fg);margin-left:8px;}
+    .hint{font-size:14px;color:var(--muted);margin-top:10px;}
+    .ok{color:var(--ok)} .err{color:var(--err)}
+    a{color:var(--accent);text-decoration:none}
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <h1>Взять книгу</h1>
-    <p>Эта страница извлекает <b>код книги</b> из URL (передан в QR) и поможет быстро открыть чат в Time и отправить команду.</p>
-
-    <div id="codeBox" class="code">—</div>
-
-    <div class="row">
-      <button id="copyBtn">Скопировать код</button>
-      <button id="openBtn" class="secondary">Открыть бота в Time</button>
+  <main class="card">
+    <h1>📚 Взять книгу</h1>
+    <p>Код книги из QR-ссылки или введите вручную:</p>
+    <div id="codeView" class="code">—</div>
+    <input type="text" id="codeInput" placeholder="Введите код (например, A1B2)" />
+    <div>
+      <button id="copyOpen" class="primary">Скопировать и открыть в Time</button>
+      <button id="copyOnly" class="ghost">Только скопировать</button>
     </div>
-
-    <div id="msg" class="msg"></div>
-
-    <p class="hint">
-      Если чат не открылся: зайдите в <b>@t-hub-library</b> в Time и вставьте код из буфера.
+    <p id="status" class="hint"></p>
+    <p class="hint">Если приложение не открылось — откройте чат вручную:<br>
+      <a href="https://time.tbank.ru/tinkoff/messages/@t-hub-library" target="_blank">
+        @t-hub-library в Time</a>
     </p>
-
-    <div class="footer">Поддерживаются форматы URL: <code>?code=XYZ</code>, <code>#code=XYZ</code>, <code>#XYZ</code>, <code>/b/XYZ</code></div>
   </main>
 
   <script>
-    // ============= Конфигурация ============
-    const TIME_DM_URL = "timeapp://time.tbank.ru/tinkoff/messages/@t-hub-library";
+    const TIME_DEEPLINK = "timeapp://time.tbank.ru/tinkoff/messages/@t-hub-library";
 
-    // Извлекаем код из разных форматов URL:
-    // 1) https://.../?code=ABC
-    // 2) https://.../#code=ABC
-    // 3) https://.../#ABC
-    // 4) https://.../b/ABC
-    function extractCode() {
-      const u = new URL(window.location.href);
+    const q = new URLSearchParams(location.search);
+    const rawPayload = q.get('payload');
+    let code = q.get('code') || q.get('c') || q.get('k') || location.hash.replace(/^#/, '');
 
-      // ?code=
-      const qp = u.searchParams.get("code");
-      if (qp) return qp.trim();
-
-      // #code= / #ABC
-      const hash = (u.hash || "").replace(/^#/, "");
-      if (hash) {
-        const m = hash.match(/^code=(.+)$/i);
-        return m ? decodeURIComponent(m[1]).trim() : hash.trim();
-      }
-
-      // /b/<code>
-      const parts = u.pathname.split("/").filter(Boolean);
-      const i = parts.findIndex(p => p.toLowerCase() === "b");
-      if (i >= 0 && parts[i+1]) return decodeURIComponent(parts[i+1]).trim();
-
-      return "";
-    }
-
-    function sanitizeCode(c) {
-      // Разрешим буквы/цифры/дефис/нижнее подчёркивание; остальное выкинем
-      const cleaned = (c || "").trim().replace(/[^A-Za-z0-9\-_]/g, "");
-      return cleaned;
-    }
-
-    async function copyToClipboard(text) {
+    if (rawPayload && !code) {
       try {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(text);
-          return true;
-        } else {
-          // Fallback для небезопасного контекста/старых браузеров
-          const ta = document.createElement("textarea");
-          ta.value = text;
-          ta.style.position = "fixed";
-          ta.style.left = "-9999px";
-          document.body.appendChild(ta);
-          ta.focus(); ta.select();
-          const ok = document.execCommand("copy");
-          document.body.removeChild(ta);
-          return ok;
-        }
-      } catch {
-        return false;
+        const json = JSON.parse(atob(rawPayload.replace(/-/g,'+').replace(/_/g,'/')));
+        code = json.code || json.book_id || json.id;
+      } catch(e){}
+    }
+
+    const normalize = s => (s||'').trim().replace(/\s+/g,'').toUpperCase();
+    code = normalize(code);
+
+    const input = document.getElementById('codeInput');
+    const view = document.getElementById('codeView');
+    const status = document.getElementById('status');
+    input.value = code;
+    if (code) view.textContent = code;
+
+    input.addEventListener('input', ()=>view.textContent = normalize(input.value)||'—');
+
+    async function copyToClipboard(text){
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch(e){
+        const t = document.createElement('textarea');
+        t.value=text;document.body.appendChild(t);t.select();
+        const ok=document.execCommand('copy');document.body.removeChild(t);
+        return ok;
       }
     }
 
-    function setMsg(text, cls) {
-      const box = document.getElementById("msg");
-      box.className = "msg " + (cls || "");
-      box.textContent = text || "";
-    }
+    document.getElementById('copyOnly').onclick = async ()=>{
+      const val = normalize(input.value);
+      if(!val){status.innerHTML='<span class="err">Введите код книги</span>';return;}
+      const ok = await copyToClipboard(val);
+      status.innerHTML = ok ? '<span class="ok">Код скопирован — откройте Time и вставьте (Ctrl+V)</span>'
+                            : '<span class="err">Не удалось скопировать код</span>';
+    };
 
-    (function init() {
-      const raw = extractCode();
-      const code = sanitizeCode(raw);
-
-      const codeBox = document.getElementById("codeBox");
-      const copyBtn = document.getElementById("copyBtn");
-      const openBtn = document.getElementById("openBtn");
-
-      if (!code) {
-        codeBox.textContent = "Код не найден в URL";
-        setMsg("Добавьте параметр ?code=XYZ или #XYZ, либо используйте путь /b/XYZ.", "err");
-        copyBtn.disabled = true;
-        openBtn.disabled = true;
-        document.title = "Код не найден — Взять книгу";
-        return;
-      }
-
-      codeBox.textContent = code;
-      document.title = `Код: ${code} — Взять книгу`;
-
-      // Автокопирование при загрузке (мягкая попытка)
-      copyToClipboard(code).then(ok => {
-        if (ok) setMsg("Код скопирован в буфер обмена.", "ok");
-      });
-
-      copyBtn.addEventListener("click", async () => {
-        const ok = await copyToClipboard(code);
-        setMsg(ok ? "Код скопирован." : "Не удалось скопировать код.", ok ? "ok" : "err");
-      });
-
-      openBtn.addEventListener("click", async () => {
-        // гарантия, что код уже в буфере
-        await copyToClipboard(code);
-        // открываем DM с библиотечным ботом
-        window.location.href = TIME_DM_URL;
-      });
-    })();
+    document.getElementById('copyOpen').onclick = async ()=>{
+      const val = normalize(input.value);
+      if(!val){status.innerHTML='<span class="err">Введите код книги</span>';return;}
+      const ok = await copyToClipboard(val);
+      status.innerHTML = ok ? '<span class="ok">Код скопирован в буфер</span>'
+                            : '<span class="err">Не удалось скопировать код</span>';
+      // Открываем приложение Time
+      setTimeout(()=>{ window.location.href = TIME_DEEPLINK; }, 200);
+    };
   </script>
 </body>
 </html>
