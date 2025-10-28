@@ -2,210 +2,164 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <title>T-Bank · Library — Взять книгу</title>
+  <title>T-Hub · Библиотека</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#FFDD2D" />
   <style>
     :root{
-      /* Брендинг T-Bank */
-      --brand-accent:#FFDD2D;            /* Tinkoff Yellow */
-      --brand-accent-contrast:#111;      /* Тёмный текст на жёлтом */
-      --brand-bg-dark:#0B0B0B;           /* Чёрный фон */
-      --brand-bg-light:#F8F8F8;          /* Светлый фон */
-      --brand-fg-dark:#F2F2F2;           /* Светлый текст */
-      --brand-fg-light:#111111;          /* Тёмный текст */
-      --brand-muted-dark:#9CA3AF;        /* Серый на тёмном */
-      --brand-muted-light:#4B5563;       /* Серый на светлом */
-      --brand-card-dark:#121212;
-      --brand-card-light:#FFFFFF;
-      --brand-border-dark:#1F1F1F;
-      --brand-border-light:#E5E7EB;
+      --accent:#FFDD2D; --accent-text:#111;
+      --bg-dark:#0B0B0B; --bg-light:#F8F8F8;
+      --fg-dark:#F2F2F2; --fg-light:#111;
+      --muted-dark:#9CA3AF; --muted-light:#4B5563;
+      --card-dark:#121212; --card-light:#FFF;
+      --border-dark:#1F1F1F; --border-light:#E5E7EB;
       --ok:#22C55E; --err:#E11D48;
     }
     @media (prefers-color-scheme: dark){
-      :root{ --bg:var(--brand-bg-dark); --fg:var(--brand-fg-dark); --muted:var(--brand-muted-dark); --card:var(--brand-card-dark); --border:var(--brand-border-dark); }
+      :root{--bg:var(--bg-dark);--fg:var(--fg-dark);--muted:var(--muted-dark);--card:var(--card-dark);--border:var(--border-dark);}
     }
     @media (prefers-color-scheme: light){
-      :root{ --bg:var(--brand-bg-light); --fg:var(--brand-fg-light); --muted:var(--brand-muted-light); --card:var(--brand-card-light); --border:var(--brand-border-light); }
+      :root{--bg:var(--bg-light);--fg:var(--fg-light);--muted:var(--muted-light);--card:var(--card-light);--border:var(--border-light);}
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
     body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans",sans-serif;
-      color:var(--fg);
+      margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       background:
         radial-gradient(900px 500px at 15% -10%, rgba(255,221,45,.18), transparent 60%),
         radial-gradient(900px 500px at 115% 120%, rgba(255,221,45,.14), transparent 60%),
         var(--bg);
-      display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;
+      color:var(--fg);display:flex;align-items:center;justify-content:center;
+      min-height:100vh;padding:24px;
     }
-    .shell{width:100%;max-width:760px}
-    .brand{display:flex;align-items:center;gap:12px;margin:0 auto 14px;width:max-content;user-select:none;}
-    .brand-badge{
-      width:36px;height:36px;border-radius:8px;
-      background:var(--brand-accent);color:var(--brand-accent-contrast);
-      display:grid;place-items:center;font-weight:900;letter-spacing:.02em;
-      box-shadow:0 8px 24px rgba(255,221,45,.35);
-    }
-    .brand-title{font-weight:800;letter-spacing:.02em}
-    .card{width:100%;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.12);}
+    .shell{width:100%;max-width:720px}
+    .brand{display:flex;align-items:center;gap:10px;margin:0 auto 14px;width:max-content}
+    .brand-badge{width:36px;height:36px;border-radius:8px;background:var(--accent);
+      color:var(--accent-text);display:grid;place-items:center;font-weight:900;
+      box-shadow:0 8px 24px rgba(255,221,45,.35)}
+    .brand-title{font-weight:800}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+      padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
     h1{margin:0 0 8px;font-size:24px}
     p{margin:6px 0;color:var(--muted)}
-    .code{
-      margin:16px 0;font-size:42px;font-weight:900;letter-spacing:.04em;
-      padding:16px 20px;border-radius:12px;background:rgba(148,163,184,.10);border:1px dashed var(--border);
-      text-align:center;word-break:break-all;
-    }
+    .code{margin:16px 0;font-size:34px;font-weight:800;letter-spacing:.02em;
+      padding:14px 16px;border-radius:12px;background:rgba(148,163,184,.10);
+      border:1px dashed var(--border);text-align:center;word-break:break-all}
     .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
-    input[type=text]{
-      flex:1 1 260px;padding:12px 14px;border-radius:10px;border:1px solid var(--border);
-      background:transparent;color:var(--fg);font-size:18px;outline:none;text-align:center;
-    }
-    button{
-      padding:12px 16px;border:0;border-radius:10px;font-size:16px;cursor:pointer;transition:transform .04s ease-in-out;
-    }
-    button:active{transform:translateY(1px)}
-    .primary{background:var(--brand-accent);color:var(--brand-accent-contrast);}
-    .ghost{background:transparent;border:1px solid var(--border);color:var(--fg);}
+    input[type=text]{flex:1 1 260px;padding:12px 14px;border-radius:10px;
+      border:1px solid var(--border);background:transparent;color:var(--fg);
+      font-size:18px;text-align:center}
+    button{padding:12px 16px;border:0;border-radius:10px;font-size:16px;cursor:pointer}
+    .primary{background:var(--accent);color:var(--accent-text)}
+    .ghost{background:transparent;border:1px solid var(--border);color:var(--fg)}
     .hint{margin-top:12px;font-size:14px;color:var(--muted)}
     .ok{color:var(--ok)} .err{color:var(--err)}
     .footer{margin-top:16px;font-size:13px;color:var(--muted)}
-    a{color:var(--brand-accent);text-decoration:none}
+    a{color:var(--accent);text-decoration:none}
     .hidden{display:none}
   </style>
 </head>
 <body>
   <div class="shell">
     <div class="brand">
-      <div class="brand-badge" aria-hidden="true">T</div>
-      <div class="brand-title">T-Bank · Library</div>
+      <div class="brand-badge">T</div>
+      <div class="brand-title">T-Hub · Библиотека</div>
     </div>
 
     <main class="card" role="main" aria-labelledby="title">
       <h1 id="title">Взять книгу</h1>
-      <p>Шаги: 1) скопируйте код, 2) откройте чат библиотеки в Time, 3) вставьте код и отправьте.</p>
+      <p>Скопируйте команду и откройте чат библиотеки в Time:</p>
 
       <div id="detectedWrap" class="hidden">
         <div class="code" id="codeVisual" aria-live="polite">—</div>
       </div>
 
       <div class="row">
-        <input type="text" id="codeInput" placeholder="Код книги (например, A1B2)" inputmode="latin" autocomplete="off" />
-        <button id="copyOpenBtn" class="primary">Скопировать и открыть в Time</button>
-        <button id="copyBtn" class="ghost" title="Только скопировать">Копировать</button>
+        <input type="text" id="codeInput" placeholder="Код книги (например, A1B2)" />
+        <button id="copyOpenBtn" class="primary">Скопировать и открыть Time</button>
+        <button id="copyBtn" class="ghost">Только скопировать</button>
       </div>
 
       <p id="status" class="hint" aria-live="polite"></p>
       <p class="footer">
-        Если приложение не открылось — используйте веб-ссылку:
-        <a id="deeplinkWeb" href="https://time.tbank.ru/tinkoff/messages/@t-hub-library" target="_blank" rel="noopener">
-          @t-hub-library в Time
-        </a>
+        Если приложение не открылось — используйте веб-чат: 
+        <a href="https://time.tbank.ru/tinkoff/messages/@t-hub-library" target="_blank">@t-hub-library</a>
       </p>
     </main>
   </div>
 
   <script>
-    // ── БРЕНД / ССЫЛКИ ────────────────────────────────────────────────────────
     const TIME_DEEPLINK = "timeapp://time.tbank.ru/tinkoff/messages/@t-hub-library";
-    const TIME_WEB_URL  = "https://time.tbank.ru/tinkoff/messages/@t-hub-library";
+    const TIME_WEB = "https://time.tbank.ru/tinkoff/messages/@t-hub-library";
 
-    // ── УТИЛИТЫ ───────────────────────────────────────────────────────────────
     const qs = k => new URLSearchParams(location.search).get(k);
-    const b64url = s => { try{ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; return atob(s);}catch(e){return null;} };
+    const b64url = s => {try{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return atob(s);}catch(e){return null;}};
     const norm = s => (s||'').toString().trim().replace(/\s+/g,'').toUpperCase();
 
     function fromHash(){
-      const h = location.hash.replace(/^#/, '');
-      if (!h) return '';
-      const sp = new URLSearchParams(h.includes('=') ? h : 'code=' + h);
-      return sp.get('code') || sp.get('c') || sp.get('k') || '';
+      const h=location.hash.replace(/^#/,'');
+      if(!h)return'';
+      const sp=new URLSearchParams(h.includes('=')?h:'code='+h);
+      return sp.get('code')||sp.get('c')||sp.get('k')||'';
     }
     function extractCode(){
-      // 1) ?code= / ?c= / ?k=
-      const direct = qs('code') || qs('c') || qs('k');
-      if (direct) return direct;
-      // 2) #code=...
-      const hash = fromHash();
-      if (hash) return hash;
-      // 3) ?payload=base64url({"code"|"book_id"|"id"})
-      const p = qs('payload') || qs('p');
-      if (p){
-        const raw = b64url(p);
-        if (raw){
-          try{
-            const o = JSON.parse(raw);
-            return o.code || o.book_id || o.id || '';
-          }catch(e){}
-        }
-      }
-      // 4) ?A1B2 — единственный безымянный параметр
-      const entries = Array.from(new URLSearchParams(location.search).entries());
-      if (entries.length === 1 && entries[0][0] === '' && entries[0][1]) return entries[0][1];
-      return '';
+      const q=qs('code')||qs('c')||qs('k'); if(q)return q;
+      const hash=fromHash(); if(hash)return hash;
+      const p=qs('payload')||qs('p');
+      if(p){const raw=b64url(p);if(raw){try{const o=JSON.parse(raw);return o.code||o.book_id||o.id||'';}catch(e){}}}
+      const entries=Array.from(new URLSearchParams(location.search).entries());
+      if(entries.length===1&&entries[0][0]===''&&entries[0][1])return entries[0][1];
+      return'';
     }
 
     async function copy(text){
-      try { await navigator.clipboard.writeText(text); return true; }
+      try{await navigator.clipboard.writeText(text);return true;}
       catch(e){
-        try{
-          const t=document.createElement('textarea'); t.value=text; t.setAttribute('readonly','');
-          t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t);
-          t.select(); document.execCommand('copy'); document.body.removeChild(t);
-          return true;
-        } catch(e2){ return false; }
+        const t=document.createElement('textarea');
+        t.value=text;t.style.position='fixed';t.style.opacity='0';
+        document.body.appendChild(t);t.select();
+        const ok=document.execCommand('copy');document.body.removeChild(t);
+        return ok;
       }
     }
 
-    // ── ЭЛЕМЕНТЫ ─────────────────────────────────────────────────────────────
-    const codeInput   = document.getElementById('codeInput');
-    const codeVisual  = document.getElementById('codeVisual');
-    const detectedWrap= document.getElementById('detectedWrap');
-    const statusEl    = document.getElementById('status');
-    const copyOpenBtn = document.getElementById('copyOpenBtn');
-    const copyBtn     = document.getElementById('copyBtn');
-    const webLink     = document.getElementById('deeplinkWeb');
+    const codeInput=document.getElementById('codeInput');
+    const codeVisual=document.getElementById('codeVisual');
+    const detectedWrap=document.getElementById('detectedWrap');
+    const statusEl=document.getElementById('status');
+    const copyOpenBtn=document.getElementById('copyOpenBtn');
+    const copyBtn=document.getElementById('copyBtn');
 
-    if (TIME_WEB_URL) webLink.href = TIME_WEB_URL;
-
-    // ── ИНИЦИАЛИЗАЦИЯ ────────────────────────────────────────────────────────
-    let code = norm(extractCode());
-    if (code){
-      codeInput.value = code;
-      codeVisual.textContent = code;
+    let code=norm(extractCode());
+    if(code){
+      codeInput.value=code;
+      codeVisual.textContent=code;
       detectedWrap.classList.remove('hidden');
-      statusEl.textContent = 'Код найден в ссылке. Нажмите кнопку — мы скопируем его и откроем чат.';
-    } else {
-      statusEl.textContent = 'Введите код вручную — он указан на корешке книги или в QR.';
+      statusEl.textContent='Код найден. Нажмите кнопку — мы скопируем команду и откроем чат.';
+    }else{
+      statusEl.textContent='Введите код книги вручную.';
     }
 
-    codeInput.addEventListener('input', ()=>{
-      const v = norm(codeInput.value);
-      codeVisual.textContent = v || '—';
-      detectedWrap.classList.toggle('hidden', !v);
+    codeInput.addEventListener('input',()=>{
+      const v=norm(codeInput.value);
+      codeVisual.textContent=v||'—';
+      detectedWrap.classList.toggle('hidden',!v);
     });
 
-    // ── ДЕЙСТВИЯ ─────────────────────────────────────────────────────────────
-    copyBtn.addEventListener('click', async ()=>{
-      const val = norm(codeInput.value);
-      if (!val){ statusEl.innerHTML = '<span class="err">Введите код книги</span>'; codeInput.focus(); return; }
-      const ok = await copy(val);
-      statusEl.innerHTML = ok ? '<span class="ok">Код скопирован — откройте Time и вставьте (Ctrl/⌘+V)</span>'
-                              : '<span class="err">Не удалось скопировать код</span>';
-    });
+    async function handleCopy(openAfter){
+      const val=norm(codeInput.value);
+      if(!val){statusEl.innerHTML='<span class="err">Введите код книги</span>';return;}
+      const command=`/library take ${val}`;
+      const ok=await copy(command);
+      statusEl.innerHTML=ok?`<span class="ok">Команда <code>${command}</code> скопирована</span>`:
+        '<span class="err">Не удалось скопировать</span>';
+      if(openAfter){
+        setTimeout(()=>{window.location.href=TIME_DEEPLINK;},200);
+        setTimeout(()=>{try{window.open(TIME_WEB,'_blank','noopener');}catch(e){}},900);
+      }
+    }
 
-    copyOpenBtn.addEventListener('click', async ()=>{
-      const val = norm(codeInput.value);
-      if (!val){ statusEl.innerHTML = '<span class="err">Введите код книги</span>'; codeInput.focus(); return; }
-      const ok = await copy(val);
-      statusEl.innerHTML = ok ? '<span class="ok">Код скопирован в буфер</span>'
-                              : '<span class="err">Не удалось скопировать код</span>';
-      // Открываем приложение Time (deeplink) + мягкий фолбэк на веб
-      setTimeout(()=>{ window.location.href = TIME_DEEPLINK; }, 200);
-      setTimeout(()=>{ try{ window.open(TIME_WEB_URL, '_blank', 'noopener'); }catch(e){} }, 900);
-    });
+    copyBtn.addEventListener('click',()=>handleCopy(false));
+    copyOpenBtn.addEventListener('click',()=>handleCopy(true));
   </script>
 </body>
 </html>
