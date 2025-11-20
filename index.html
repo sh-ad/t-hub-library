@@ -45,7 +45,7 @@
       padding:14px 16px;border-radius:12px;background:rgba(148,163,184,.10);
       border:1px dashed var(--border);text-align:center;word-break:break-all}
     .row{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
-    input[type=text]{flex:1 1 260px;padding:12px 14px;border-radius:10px;
+    input[type=text]{flex:1 1 220px;padding:12px 14px;border-radius:10px;
       border:1px solid var(--border);background:transparent;color:var(--fg);
       font-size:18px;text-align:center}
     button{padding:12px 16px;border:0;border-radius:10px;font-size:16px;cursor:pointer}
@@ -56,6 +56,14 @@
     .footer{margin-top:16px;font-size:13px;color:var(--muted)}
     a{color:var(--accent);text-decoration:none}
     .hidden{display:none}
+
+    /* Toggle */
+    .toggle{display:flex;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--border);
+      border-radius:12px;padding:6px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .toggle button{background:transparent;border:1px solid transparent;padding:8px 12px;border-radius:8px}
+    .toggle button[aria-pressed="true"]{background:var(--accent);color:var(--accent-text)}
+    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;border:1px solid var(--border);
+      border-bottom-width:2px;border-radius:6px;padding:0 6px}
   </style>
 </head>
 <body>
@@ -66,22 +74,28 @@
     </div>
 
     <main class="card" role="main" aria-labelledby="title">
-      <h1 id="title">Взять книгу</h1>
-      <p>Скопируйте команду и откройте чат библиотеки в Time:</p>
+      <h1 id="title">Взять или вернуть книгу</h1>
+      <p>Выберите действие, введите код и откройте чат библиотеки в Time.</p>
+
+      <div class="toggle" role="tablist" aria-label="Действие">
+        <button id="actTake"  role="tab" aria-selected="true"  aria-pressed="true" >Взять</button>
+        <button id="actReturn"role="tab" aria-selected="false" aria-pressed="false">Вернуть</button>
+        <span class="hint">быстрые клавиши: <span class="kbd">T</span>/<span class="kbd">R</span></span>
+      </div>
 
       <div id="detectedWrap" class="hidden">
         <div class="code" id="codeVisual" aria-live="polite">—</div>
       </div>
 
       <div class="row">
-        <input type="text" id="codeInput" placeholder="Код книги (например, A1B2)" />
+        <input type="text" id="codeInput" placeholder="Код книги (например, 1234)" inputmode="numeric" />
         <button id="copyOpenBtn" class="primary">Скопировать и открыть Time</button>
         <button id="copyBtn" class="ghost">Только скопировать</button>
       </div>
 
       <p id="status" class="hint" aria-live="polite"></p>
       <p class="footer">
-        Если приложение не открылось — используйте веб-чат: 
+        Если приложение не открылось — используйте веб-чат:
         <a href="https://time.tbank.ru/tinkoff/messages/@t-hub-library" target="_blank">@t-hub-library</a>
       </p>
     </main>
@@ -94,25 +108,34 @@
     const qs = k => new URLSearchParams(location.search).get(k);
     const b64url = s => {try{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return atob(s);}catch(e){return null;}};
     const norm = s => (s||'').toString().trim().replace(/\s+/g,'').toUpperCase();
+    const normCode = s => norm(s).replace(/\D/g,'').slice(0,4); // оставляем только 4 цифры
 
     function fromHash(){
       const h=location.hash.replace(/^#/,'');
-      if(!h)return'';
+      if(!h)return{};
       const sp=new URLSearchParams(h.includes('=')?h:'code='+h);
-      return sp.get('code')||sp.get('c')||sp.get('k')||'';
+      return { code: sp.get('code')||sp.get('c')||sp.get('k')||'', action: sp.get('action')||sp.get('a')||'' };
     }
-    function extractCode(){
-      const q=qs('code')||qs('c')||qs('k'); if(q)return q;
-      const hash=fromHash(); if(hash)return hash;
-      const p=qs('payload')||qs('p');
-      if(p){const raw=b64url(p);if(raw){try{const o=JSON.parse(raw);return o.code||o.book_id||o.id||'';}catch(e){}}}
-      const entries=Array.from(new URLSearchParams(location.search).entries());
-      if(entries.length===1&&entries[0][0]===''&&entries[0][1])return entries[0][1];
-      return'';
+    function extractInitial(){
+      const qCode = qs('code')||qs('c')||qs('k');
+      const qAction = (qs('action')||qs('a')||'').toLowerCase();
+      const h = fromHash();
+      const p = qs('payload')||qs('p');
+      let code = qCode || h.code || '';
+      let action = (qAction || h.action || '').toLowerCase();
+      if(p){
+        const raw=b64url(p);
+        if(raw){ try{ const o=JSON.parse(raw); code = code || o.code||o.book_id||o.id||''; action = action || (o.action||'').toLowerCase(); }catch(e){} }
+      }
+      if(!code){
+        const entries=Array.from(new URLSearchParams(location.search).entries());
+        if(entries.length===1&&entries[0][0]===''&&entries[0][1]) code = entries[0][1];
+      }
+      return { code, action };
     }
 
     async function copy(text){
-      try{await navigator.clipboard.writeText(text);return true;}
+      try{ await navigator.clipboard.writeText(text); return true; }
       catch(e){
         const t=document.createElement('textarea');
         t.value=text;t.style.position='fixed';t.style.opacity='0';
@@ -122,14 +145,30 @@
       }
     }
 
-    const codeInput=document.getElementById('codeInput');
-    const codeVisual=document.getElementById('codeVisual');
-    const detectedWrap=document.getElementById('detectedWrap');
-    const statusEl=document.getElementById('status');
-    const copyOpenBtn=document.getElementById('copyOpenBtn');
-    const copyBtn=document.getElementById('copyBtn');
+    const codeInput   = document.getElementById('codeInput');
+    const codeVisual  = document.getElementById('codeVisual');
+    const detectedWrap= document.getElementById('detectedWrap');
+    const statusEl    = document.getElementById('status');
+    const copyOpenBtn = document.getElementById('copyOpenBtn');
+    const copyBtn     = document.getElementById('copyBtn');
+    const actTakeBtn  = document.getElementById('actTake');
+    const actReturnBtn= document.getElementById('actReturn');
 
-    let code=norm(extractCode());
+    let currentAction = 'take'; // 'take' | 'return'
+
+    function setAction(a){
+      currentAction = (a==='return'?'return':'take');
+      actTakeBtn.setAttribute('aria-pressed', String(currentAction==='take'));
+      actReturnBtn.setAttribute('aria-pressed', String(currentAction==='return'));
+      actTakeBtn.setAttribute('aria-selected', String(currentAction==='take'));
+      actReturnBtn.setAttribute('aria-selected', String(currentAction==='return'));
+      const verbRU = currentAction==='take' ? 'взять' : 'вернуть';
+      statusEl.textContent = `Готово ${verbRU}. Введите код и нажмите кнопку.`;
+    }
+
+    // init from URL
+    const init = extractInitial();
+    let code = normCode(init.code);
     if(code){
       codeInput.value=code;
       codeVisual.textContent=code;
@@ -138,17 +177,29 @@
     }else{
       statusEl.textContent='Введите код книги вручную.';
     }
+    setAction(init.action);
 
     codeInput.addEventListener('input',()=>{
-      const v=norm(codeInput.value);
+      const v=normCode(codeInput.value);
+      codeInput.value=v;
       codeVisual.textContent=v||'—';
       detectedWrap.classList.toggle('hidden',!v);
     });
 
+    actTakeBtn.addEventListener('click',()=>setAction('take'));
+    actReturnBtn.addEventListener('click',()=>setAction('return'));
+
+    // Keyboard shortcut: T / R
+    window.addEventListener('keydown', (e)=>{
+      if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.key==='t' || e.key==='T') setAction('take');
+      if (e.key==='r' || e.key==='R') setAction('return');
+    });
+
     async function handleCopy(openAfter){
-      const val=norm(codeInput.value);
-      if(!val){statusEl.innerHTML='<span class="err">Введите код книги</span>';return;}
-      const command=`/library take ${val}`;
+      const val=normCode(codeInput.value);
+      if(!val){statusEl.innerHTML='<span class="err">Введите 4-значный код книги</span>';return;}
+      const command=`/library ${currentAction} ${val}`;
       const ok=await copy(command);
       statusEl.innerHTML=ok?`<span class="ok">Команда <code>${command}</code> скопирована</span>`:
         '<span class="err">Не удалось скопировать</span>';
@@ -157,7 +208,7 @@
         setTimeout(()=>{try{window.open(TIME_WEB,'_blank','noopener');}catch(e){}},900);
       }
     }
-    
+
     copyBtn.addEventListener('click',()=>handleCopy(false));
     copyOpenBtn.addEventListener('click',()=>handleCopy(true));
   </script>
