@@ -57,13 +57,10 @@
     a{color:var(--accent);text-decoration:none}
     .hidden{display:none}
 
-    /* Toggle */
     .toggle{display:flex;gap:8px;background:rgba(148,163,184,.10);border:1px solid var(--border);
       border-radius:12px;padding:6px;align-items:center;justify-content:center;flex-wrap:wrap}
     .toggle button{background:transparent;border:1px solid transparent;padding:8px 12px;border-radius:8px}
     .toggle button[aria-pressed="true"]{background:var(--accent);color:var(--accent-text)}
-    .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, monospace;border:1px solid var(--border);
-      border-bottom-width:2px;border-radius:6px;padding:0 6px}
   </style>
 </head>
 <body>
@@ -80,7 +77,6 @@
       <div class="toggle" role="tablist" aria-label="Действие">
         <button id="actTake"  role="tab" aria-selected="true"  aria-pressed="true" >Взять</button>
         <button id="actReturn"role="tab" aria-selected="false" aria-pressed="false">Вернуть</button>
-        <span class="hint">быстрые клавиши: <span class="kbd">T</span>/<span class="kbd">R</span></span>
       </div>
 
       <div id="detectedWrap" class="hidden">
@@ -108,7 +104,7 @@
     const qs = k => new URLSearchParams(location.search).get(k);
     const b64url = s => {try{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return atob(s);}catch(e){return null;}};
     const norm = s => (s||'').toString().trim().replace(/\s+/g,'').toUpperCase();
-    const normCode = s => norm(s).replace(/\D/g,'').slice(0,4); // оставляем только 4 цифры
+    const normCode = s => norm(s).replace(/\D/g,'').slice(0,4);
 
     function fromHash(){
       const h=location.hash.replace(/^#/,'');
@@ -154,7 +150,7 @@
     const actTakeBtn  = document.getElementById('actTake');
     const actReturnBtn= document.getElementById('actReturn');
 
-    let currentAction = 'take'; // 'take' | 'return'
+    let currentAction = 'take';
 
     function setAction(a){
       currentAction = (a==='return'?'return':'take');
@@ -166,7 +162,6 @@
       statusEl.textContent = `Готово ${verbRU}. Введите код и нажмите кнопку.`;
     }
 
-    // init from URL
     const init = extractInitial();
     let code = normCode(init.code);
     if(code){
@@ -188,13 +183,6 @@
 
     actTakeBtn.addEventListener('click',()=>setAction('take'));
     actReturnBtn.addEventListener('click',()=>setAction('return'));
-
-    // Keyboard shortcut: T / R
-    window.addEventListener('keydown', (e)=>{
-      if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
-      if (e.key==='t' || e.key==='T') setAction('take');
-      if (e.key==='r' || e.key==='R') setAction('return');
-    });
 
     async function handleCopy(openAfter){
       const val=normCode(codeInput.value);
